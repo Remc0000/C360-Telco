@@ -1,0 +1,324 @@
+Party & Account
+CREATE TABLE party (
+  party_id            STRING NOT NULL,
+  party_type          STRING NOT NULL,  -- PERSON | ORG
+  display_name        STRING,
+  legal_name          STRING,
+  given_name          STRING,
+  family_name         STRING,
+  birth_date          DATE,
+  email               STRING,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (party_id)
+);
+
+CREATE TABLE customer_account (
+  account_id          STRING NOT NULL,
+  account_type        STRING NOT NULL,  -- CONSUMER | SMB | ENTERPRISE
+  account_status      STRING NOT NULL,  -- ACTIVE | SUSPENDED | CLOSED
+  billing_cycle_day   INT,
+  currency_code       STRING,
+  credit_class        STRING,
+  payment_terms       STRING,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (account_id)
+);
+
+CREATE TABLE account_party_role (
+  account_id          STRING NOT NULL,
+  party_id            STRING NOT NULL,
+  role_type           STRING NOT NULL,  -- OWNER | PAYER | AUTH_USER
+  effective_from_ts   TIMESTAMP,
+  effective_to_ts     TIMESTAMP,
+  is_current          BOOLEAN,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (account_id, party_id, role_type, effective_from_ts)
+);
+
+Subscriptions
+CREATE TABLE subscriber (
+  subscriber_id       STRING NOT NULL,
+  account_id          STRING NOT NULL,
+  subscriber_type     STRING NOT NULL,  -- MOBILE | FIXED | IOT
+  brand               STRING,           -- if multi-brand operator
+  status              STRING NOT NULL,  -- ACTIVE | SUSPENDED | BARRED | TERMINATED
+  activation_date     DATE,
+  termination_date    DATE,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (subscriber_id)
+);
+
+CREATE TABLE subscriber_status_history (
+  subscriber_id       STRING NOT NULL,
+  status              STRING NOT NULL,
+  reason_code         STRING,
+  effective_from_ts   TIMESTAMP,
+  effective_to_ts     TIMESTAMP,
+  is_current          BOOLEAN,
+  PRIMARY KEY (subscriber_id, effective_from_ts)
+);
+
+MSISDN, SIM, and Devices
+CREATE TABLE msisdn (
+  msisdn_id           STRING NOT NULL,   -- can store E.164 number as ID
+  e164_number         STRING NOT NULL,
+  number_status       STRING NOT NULL,   -- AVAILABLE | ASSIGNED | QUARANTINED | RESERVED
+  country_code        STRING,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (msisdn_id)
+);
+
+CREATE TABLE subscriber_msisdn (
+  subscriber_id       STRING NOT NULL,
+  msisdn_id           STRING NOT NULL,
+  effective_from_ts   TIMESTAMP,
+  effective_to_ts     TIMESTAMP,
+  is_current          BOOLEAN,
+  PRIMARY KEY (subscriber_id, msisdn_id, effective_from_ts)
+);
+
+CREATE TABLE sim (
+  sim_id              STRING NOT NULL,   -- ICCID as ID
+  iccid               STRING NOT NULL,
+  imsi                STRING,
+  sim_type            STRING,            -- ESIM | PHYSICAL
+  sim_status          STRING,            -- AVAILABLE | ASSIGNED | SUSPENDED | LOST | RETIRED
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (sim_id)
+);
+
+CREATE TABLE subscriber_sim (
+  subscriber_id       STRING NOT NULL,
+  sim_id              STRING NOT NULL,
+  effective_from_ts   TIMESTAMP,
+  effective_to_ts     TIMESTAMP,
+  is_current          BOOLEAN,
+  swap_reason         STRING,
+  PRIMARY KEY (subscriber_id, sim_id, effective_from_ts)
+);
+
+CREATE TABLE device (
+  device_id           STRING NOT NULL,   -- IMEI as ID (or hashed)
+  imei                STRING,
+  tac                 STRING,
+  manufacturer        STRING,
+  model               STRING,
+  os_name             STRING,
+  os_version          STRING,
+  device_category     STRING,            -- PHONE | ROUTER | IOT
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (device_id)
+);
+
+CREATE TABLE subscriber_device (
+  subscriber_id       STRING NOT NULL,
+  device_id           STRING NOT NULL,
+  effective_from_ts   TIMESTAMP,
+  effective_to_ts     TIMESTAMP,
+  is_current          BOOLEAN,
+  ownership_type      STRING,            -- BYOD | FINANCED | LEASED
+  PRIMARY KEY (subscriber_id, device_id, effective_from_ts)
+);
+
+Catalog & Subscriptions
+CREATE TABLE product_catalog (
+  product_id          STRING NOT NULL,
+  product_type        STRING NOT NULL,   -- PLAN | ADDON | DEVICE | BUNDLE
+  product_name        STRING NOT NULL,
+  product_family      STRING,            -- MOBILE_POSTPAID | PREPAID | FWA | FTTH | IOT
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (product_id)
+);
+
+CREATE TABLE subscription (
+  subscription_id     STRING NOT NULL,
+  subscriber_id       STRING NOT NULL,
+  product_id          STRING NOT NULL,
+  start_date          DATE,
+  end_date            DATE,
+  status              STRING NOT NULL,   -- ACTIVE | SUSPENDED | CANCELLED
+  recurring_fee       DOUBLE,
+  currency_code       STRING,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (subscription_id)
+);
+
+CREATE TABLE entitlement (
+  entitlement_id      STRING NOT NULL,
+  subscription_id     STRING NOT NULL,
+  entitlement_type    STRING NOT NULL,   -- DATA_CAP | ROAMING_PACK | SPEED_TIER | CONTENT
+  value               DOUBLE,
+  unit                STRING,            -- GB | MBPS | DAYS
+  valid_from_ts       TIMESTAMP,
+  valid_to_ts         TIMESTAMP,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (entitlement_id)
+);
+
+
+Services and Provisioning
+
+CREATE TABLE service (
+  service_id          STRING NOT NULL,
+  subscriber_id       STRING NOT NULL,
+  service_type        STRING NOT NULL,   -- VOICE | DATA | SMS | BROADBAND | TV | IOT
+  service_status      STRING NOT NULL,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (service_id)
+);
+
+CREATE TABLE service_order (
+  order_id            STRING NOT NULL,
+  subscriber_id       STRING NOT NULL,
+  order_type          STRING NOT NULL,   -- ACTIVATE | PLAN_CHANGE | SIM_SWAP | PORT_IN | TERMINATE
+  order_status        STRING NOT NULL,   -- SUBMITTED | IN_PROGRESS | COMPLETED | FAILED
+  requested_ts        TIMESTAMP,
+  completed_ts        TIMESTAMP,
+  failure_reason      STRING,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (order_id)
+);
+
+CREATE TABLE porting_request (
+  port_request_id     STRING NOT NULL,
+  subscriber_id       STRING NOT NULL,
+  direction           STRING NOT NULL,   -- PORT_IN | PORT_OUT
+  donor_operator      STRING,
+  recipient_operator  STRING,
+  requested_msisdn    STRING,
+  status              STRING NOT NULL,   -- REQUESTED | APPROVED | SCHEDULED | COMPLETED | REJECTED
+  requested_date      DATE,
+  completed_date      DATE,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (port_request_id)
+);
+
+Charging, Invoice, and Payments
+CREATE TABLE charge (
+  charge_id           STRING NOT NULL,
+  account_id          STRING NOT NULL,
+  subscriber_id       STRING,
+  charge_type         STRING NOT NULL,   -- RECURRING | USAGE | ONE_TIME | ADJUSTMENT
+  source_usage_id     STRING,            -- link to usage_record where relevant
+  amount              DOUBLE NOT NULL,
+  currency_code       STRING NOT NULL,
+  charge_ts           TIMESTAMP NOT NULL,
+  created_ts          TIMESTAMP,
+  PRIMARY KEY (charge_id)
+);
+
+CREATE TABLE invoice (
+  invoice_id          STRING NOT NULL,
+  account_id          STRING NOT NULL,
+  billing_period_start DATE NOT NULL,
+  billing_period_end   DATE NOT NULL,
+  invoice_date        DATE NOT NULL,
+  due_date            DATE,
+  total_amount        DOUBLE NOT NULL,
+  currency_code       STRING NOT NULL,
+  status              STRING NOT NULL,   -- ISSUED | PAID | OVERDUE | CANCELLED
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (invoice_id)
+);
+
+CREATE TABLE invoice_line (
+  invoice_line_id     STRING NOT NULL,
+  invoice_id          STRING NOT NULL,
+  subscriber_id       STRING,
+  line_type           STRING NOT NULL,   -- PLAN | ADDON | USAGE | ROAMING | DEVICE_FINANCE | DISCOUNT
+  description         STRING,
+  amount              DOUBLE NOT NULL,
+  tax_amount          DOUBLE,
+  created_ts          TIMESTAMP,
+  PRIMARY KEY (invoice_line_id)
+);
+
+CREATE TABLE payment (
+  payment_id          STRING NOT NULL,
+  account_id          STRING NOT NULL,
+  payment_ts          TIMESTAMP NOT NULL,
+  amount              DOUBLE NOT NULL,
+  currency_code       STRING NOT NULL,
+  method              STRING,            -- CARD | DD | BANK_TRANSFER | CASH | WALLET
+  status              STRING,            -- AUTHORIZED | SETTLED | FAILED | REFUNDED
+  created_ts          TIMESTAMP,
+  PRIMARY KEY (payment_id)
+);
+
+CREATE TABLE prepaid_balance_snapshot (
+  snapshot_id         STRING NOT NULL,
+  subscriber_id       STRING NOT NULL,
+  snapshot_ts         TIMESTAMP NOT NULL,
+  balance_amount      DOUBLE NOT NULL,
+  currency_code       STRING NOT NULL,
+  created_ts          TIMESTAMP,
+  PRIMARY KEY (snapshot_id)
+);
+
+CREATE TABLE topup (
+  topup_id            STRING NOT NULL,
+  subscriber_id       STRING NOT NULL,
+  topup_ts            TIMESTAMP NOT NULL,
+  amount              DOUBLE NOT NULL,
+  currency_code       STRING NOT NULL,
+  channel             STRING,            -- APP | VOUCHER | RETAIL | BANK
+  created_ts          TIMESTAMP,
+  PRIMARY KEY (topup_id)
+);
+
+Care and Trouble Tickets
+
+CREATE TABLE case_ticket (
+  case_id             STRING NOT NULL,
+  account_id          STRING,
+  subscriber_id       STRING,
+  opened_ts           TIMESTAMP NOT NULL,
+  channel             STRING,            -- CALL | CHAT | STORE | APP
+  category            STRING,            -- BILLING | NETWORK | DEVICE | PORTING | PLAN
+  priority            STRING,            -- LOW | MED | HIGH | CRITICAL
+  status              STRING,            -- OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  subject             STRING,
+  created_ts          TIMESTAMP,
+  updated_ts          TIMESTAMP,
+  PRIMARY KEY (case_id)
+);
+
+address
+CREATE TABLE address (
+  address_id        STRING NOT NULL,
+  line1             STRING,
+  line2             STRING,
+  city              STRING,
+  state_region      STRING,
+  postal_code       STRING,
+  country_code      STRING,
+  latitude          DOUBLE,
+  longitude         DOUBLE,
+  created_ts        TIMESTAMP,
+  updated_ts        TIMESTAMP,
+  PRIMARY KEY (address_id)
+);
+
+CREATE TABLE party_address (
+  party_id          STRING NOT NULL,
+  address_id        STRING NOT NULL,
+  address_type      STRING,   -- HOME | BILLING | SERVICE | INSTALLATION
+  primary_flag      BOOLEAN,
+  valid_from_ts     TIMESTAMP,
+  valid_to_ts       TIMESTAMP,
+  PRIMARY KEY (party_id, address_id, valid_from_ts)
+);

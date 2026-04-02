@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telco Data Generator</title>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --bg-surface: #161b22;
+            --bg-surface-light: #21262d;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --info: #58a6ff;
+            --warning: #d29922;
+            --error: #f85149;
+            --success: #3fb950;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        header h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+        header p { color: var(--text-muted); font-size: 13px; }
+        
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .form-group { margin-bottom: 12px; }
+        
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 13px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: var(--bg-surface-light);
+            border-radius: 2px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            min-width: 70px;
+            text-align: right;
+            font-family: monospace;
+            color: var(--info);
+            font-size: 12px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { background: var(--bg-surface-light); color: var(--text-muted); cursor: not-allowed; }
+        
+        .btn-secondary { background: var(--bg-surface-light); color: var(--text); }
+        .btn-secondary:hover { background: var(--border); }
+        
+        .btn-info { background: var(--info); color: #000; }
+        .btn-info:hover { background: #79b8ff; }
+        
+        .btn-danger { background: var(--error); color: white; }
+        .btn-danger:hover { background: #da3633; }
+        
+        .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        
+        .preset-btn { padding: 6px 12px; font-size: 11px; }
+        .preset-btn.active { background: var(--accent); color: white; }
+        
+        .progress-container { margin: 16px 0; }
+        
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-surface-light);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--info));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        
+        .log-container {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        
+        .log-entry { color: var(--text-muted); }
+        .log-entry.error { color: var(--error); }
+        .log-entry.success { color: var(--success); }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-badge.idle { background: var(--bg-surface-light); color: var(--text-muted); }
+        .status-badge.running { background: rgba(88, 166, 255, 0.2); color: var(--info); }
+        .status-badge.success { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+        .status-badge.error { background: rgba(248, 81, 73, 0.2); color: var(--error); }
+        
+        .result-card {
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        
+        .result-card h3 { color: var(--success); margin-bottom: 10px; font-size: 14px; }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .result-item {
+            background: var(--bg-surface);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .result-item label { font-size: 10px; text-transform: uppercase; }
+        .result-item .value { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 2px; }
+        
+        .actions-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 16px;
+        }
+        
+        .estimate-display {
+            background: var(--bg-surface-light);
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+        
+        .estimate-display .label { color: var(--text-muted); }
+        .estimate-display .value { font-weight: 600; color: var(--info); }
+        
+        .row { display: flex; gap: 12px; }
+        .row > * { flex: 1; }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+        
+        .status-dot.connected { background: var(--success); }
+        .status-dot.error { background: var(--error); }
+        
+        .capacity-info {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇳🇱 Telco Customer Data Generator</h1>
+            <p>Generate realistic Dutch telecommunications customer data for Microsoft Fabric</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="config">Configuration</button>
+            <button class="tab" data-tab="fabric">Microsoft Fabric</button>
+            <button class="tab" data-tab="logs">Output Log</button>
+        </div>
+        
+        <!-- Configuration Tab -->
+        <div id="config" class="tab-content active">
+            <div class="card">
+                <h3 class="card-title">Quick Presets</h3>
+                <div class="btn-group">
+                    <button class="btn btn-secondary preset-btn" data-preset="SMALL">Small (Dev)</button>
+                    <button class="btn btn-secondary preset-btn active" data-preset="MEDIUM">Medium</button>
+                    <button class="btn btn-secondary preset-btn" data-preset="LARGE">Large</button>
+                    <button class="btn btn-secondary preset-btn" data-preset="ENTERPRISE">Enterprise</button>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="card">
+                    <h3 class="card-title">Core Entities</h3>
+                    <div class="form-group">
+                        <label>Parties (Customers)</label>
+                        <div class="slider-group">
+                            <input type="range" id="num_parties" min="10" max="100000" value="1000" step="10">
+                            <span class="slider-value" id="num_parties_val">1,000</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Accounts</label>
+                        <div class="slider-group">
+                            <input type="range" id="num_accounts" min="10" max="80000" value="800" step="10">
+                            <span class="slider-value" id="num_accounts_val">800</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Subscribers</label>
+                        <div class="slider-group">
+                            <input type="range" id="num_subscribers" min="10" max="150000" value="1200" step="10">
+                            <span class="slider-value" id="num_subscribers_val">1,200</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Products in Catalog</label>
+                        <div class="slider-group">
+                            <input type="range" id="num_products" min="10" max="500" value="50" step="5">
+                            <span class="slider-value" id="num_products_val">50</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">Output Settings</h3>
+                    <div class="form-group">
+                        <label>Output Directory</label>
+                        <input type="text" id="output_dir" placeholder="Leave empty for temp directory">
+                    </div>
+                    <div class="estimate-display">
+                        <span class="label">Estimated Total Rows:</span>
+                        <span class="value" id="estimate_value">~50,000</span>
+                    </div>
+                    <div class="actions-row">
+                        <button class="btn btn-primary" id="btn_generate" onclick="startGeneration()">
+                            Generate Data
+                        </button>
+                        <button class="btn btn-danger" id="btn_stop_gen" onclick="stopOperation()" style="display:none;">
+                            Stop
+                        </button>
+                        <span class="status-badge idle" id="gen_status_badge">Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Microsoft Fabric Tab -->
+        <div id="fabric" class="tab-content">
+            <div class="row">
+                <!-- Connection Card -->
+                <div class="card">
+                    <h3 class="card-title">Connection</h3>
+                    <div class="form-group">
+                        <label>Authentication Method</label>
+                        <select id="auth_method">
+                            <option value="browser">Browser Login</option>
+                            <option value="device_code">Device Code</option>
+                        </select>
+                    </div>
+                    <div class="connection-status" id="connection_status">
+                        <span class="status-dot" id="status_dot"></span>
+                        <span id="status_text">Not connected</span>
+                    </div>
+                    <div class="actions-row" style="margin-top: 12px;">
+                        <button class="btn btn-info" onclick="testConnection()">Test Connection</button>
+                    </div>
+                </div>
+                
+                <!-- Capacity Card -->
+                <div class="card">
+                    <h3 class="card-title">Fabric Capacity</h3>
+                    <div class="form-group">
+                        <label>Select Capacity</label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="capacity_select" style="flex: 1;">
+                                <option value="">-- Authenticate first --</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="refreshCapacities()">Refresh</button>
+                        </div>
+                    </div>
+                    <div class="capacity-info" id="capacity_info">Authenticate first, then select a capacity</div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Workspace Card -->
+                <div class="card">
+                    <h3 class="card-title">Workspace & Lakehouse</h3>
+                    <div class="form-group">
+                        <label>Workspace Name</label>
+                        <input type="text" id="workspace_name" value="Teclo-E2E-Demo">
+                    </div>
+                    <div class="form-group">
+                        <label>Lakehouse Name</label>
+                        <input type="text" id="lakehouse_name" value="telco_data">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="auto_create" checked>
+                        <label for="auto_create" style="margin-bottom: 0;">Auto-create if not exists</label>
+                    </div>
+                </div>
+                
+                <!-- Data Source Card -->
+                <div class="card">
+                    <h3 class="card-title">Data Source</h3>
+                    <div class="form-group">
+                        <label>Source Directory (generated data)</label>
+                        <input type="text" id="upload_dir" placeholder="Path to generated CSV files">
+                    </div>
+                    <div class="form-group">
+                        <label>Remote Path in Lakehouse</label>
+                        <input type="text" id="remote_folder" value="Files/telco_data">
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- Progress & Actions -->
+            <div class="card">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="fabric_progress_fill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="fabric_progress_message">Ready</span>
+                        <span id="fabric_progress_percent">0%</span>
+                    </div>
+                </div>
+                <div class="actions-row">
+                    <button class="btn btn-primary" id="btn_upload" onclick="startUpload()">
+                        Upload to Fabric
+                    </button>
+                    <button class="btn btn-danger" id="btn_stop_upload" onclick="stopOperation()" style="display:none;">
+                        Stop
+                    </button>
+                    <span class="status-badge idle" id="upload_status_badge">Ready</span>
+                </div>
+            </div>
+            
+            <div id="upload_result" style="display:none;"></div>
+        </div>
+        
+        <!-- Output Log Tab -->
+        <div id="logs" class="tab-content">
+            <div class="card">
+                <h3 class="card-title">Progress</h3>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress_fill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progress_message">Ready</span>
+                        <span id="progress_percent">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Log Output</h3>
+                <div class="log-container" id="log_container">
+                    <div class="log-entry">Ready to generate data...</div>
+                </div>
+            </div>
+            
+            <div id="result_container" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let fabricAuthenticated = false;
+        let fabricCapacities = [];
+        
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Slider value updates
+        const sliders = ['num_parties', 'num_accounts', 'num_subscribers', 'num_products'];
+        
+        sliders.forEach(id => {
+            const slider = document.getElementById(id);
+            const valueSpan = document.getElementById(id + '_val');
+            if (slider && valueSpan) {
+                slider.addEventListener('input', () => {
+                    valueSpan.textContent = parseInt(slider.value).toLocaleString();
+                    updateEstimate();
+                });
+            }
+        });
+        
+        // Preset buttons
+        let presets = {};
+        fetch('/api/presets')
+            .then(r => r.json())
+            .then(data => { presets = data; });
+        
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const preset = presets[btn.dataset.preset];
+                if (preset) {
+                    sliders.forEach(key => {
+                        const slider = document.getElementById(key);
+                        const valueSpan = document.getElementById(key + '_val');
+                        if (slider && valueSpan && preset[key]) {
+                            slider.value = preset[key];
+                            valueSpan.textContent = parseInt(preset[key]).toLocaleString();
+                        }
+                    });
+                    updateEstimate();
+                }
+            });
+        });
+        
+        function updateEstimate() {
+            const parties = parseInt(document.getElementById('num_parties')?.value || 0);
+            const accounts = parseInt(document.getElementById('num_accounts')?.value || 0);
+            const subscribers = parseInt(document.getElementById('num_subscribers')?.value || 0);
+            
+            // Estimate based on ratios
+            const total = parties * 3 + accounts * 15 + subscribers * 8;
+            document.getElementById('estimate_value').textContent = '~' + total.toLocaleString();
+        }
+        
+        function getConfigData() {
+            return {
+                num_parties: parseInt(document.getElementById('num_parties').value),
+                num_accounts: parseInt(document.getElementById('num_accounts').value),
+                num_subscribers: parseInt(document.getElementById('num_subscribers').value),
+                num_products: parseInt(document.getElementById('num_products').value),
+                output_dir: document.getElementById('output_dir').value
+            };
+        }
+        
+        function updateStatus(badgeId, status, badgeClass) {
+            const badge = document.getElementById(badgeId);
+            if (badge) {
+                badge.textContent = status;
+                badge.className = 'status-badge ' + badgeClass;
+            }
+        }
+        
+        function updateProgress(percent, message, prefix = '') {
+            const fillId = prefix ? prefix + '_progress_fill' : 'progress_fill';
+            const percentId = prefix ? prefix + '_progress_percent' : 'progress_percent';
+            const messageId = prefix ? prefix + '_progress_message' : 'progress_message';
+            
+            const fill = document.getElementById(fillId);
+            const percentSpan = document.getElementById(percentId);
+            const messageSpan = document.getElementById(messageId);
+            
+            if (fill) fill.style.width = percent + '%';
+            if (percentSpan) percentSpan.textContent = percent + '%';
+            if (message && messageSpan) messageSpan.textContent = message;
+        }
+        
+        function addLog(message, isError = false) {
+            const container = document.getElementById('log_container');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry' + (isError ? ' error' : (message.includes('✅') ? ' success' : ''));
+            entry.textContent = message;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('log_container').innerHTML = '';
+        }
+        
+        // SSE for real-time updates
+        let eventSource = null;
+        
+        function startEventSource() {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource('/api/stream');
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.log) {
+                    addLog(data.log, data.log.includes('ERROR') || data.log.includes('❌'));
+                }
+                if (data.progress >= 0) {
+                    updateProgress(data.progress, '');
+                    updateProgress(data.progress, '', 'fabric');
+                }
+            };
+        }
+        
+        // ===== FABRIC CONNECTION =====
+        
+        async function testConnection() {
+            const authMethod = document.getElementById('auth_method').value;
+            
+            document.getElementById('status_text').textContent = 'Connecting...';
+            document.getElementById('status_dot').className = 'status-dot';
+            addLog('Testing Fabric connection...');
+            
+            startEventSource();
+            
+            try {
+                const response = await fetch('/api/fabric/test', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({auth_method: authMethod})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    fabricAuthenticated = true;
+                    fabricCapacities = result.capacities || [];
+                    
+                    document.getElementById('status_text').textContent = '✅ Connected';
+                    document.getElementById('status_dot').className = 'status-dot connected';
+                    
+                    // Populate capacity dropdown
+                    populateCapacities(fabricCapacities);
+                    
+                    addLog('✅ ' + result.message);
+                } else {
+                    document.getElementById('status_text').textContent = '❌ ' + result.message;
+                    document.getElementById('status_dot').className = 'status-dot error';
+                    addLog('❌ ' + result.message, true);
+                }
+            } catch (e) {
+                document.getElementById('status_text').textContent = '❌ Error';
+                document.getElementById('status_dot').className = 'status-dot error';
+                addLog('❌ Connection error: ' + e.message, true);
+            }
+        }
+        
+        async function refreshCapacities() {
+            if (!fabricAuthenticated) {
+                alert('Please test connection first');
+                return;
+            }
+            
+            addLog('Refreshing capacities...');
+            
+            try {
+                const response = await fetch('/api/fabric/capacities');
+                const result = await response.json();
+                
+                if (result.capacities) {
+                    fabricCapacities = result.capacities;
+                    populateCapacities(fabricCapacities);
+                    addLog('✅ Found ' + fabricCapacities.length + ' capacities');
+                } else {
+                    addLog('❌ ' + (result.error || 'Failed to fetch capacities'), true);
+                }
+            } catch (e) {
+                addLog('❌ Error: ' + e.message, true);
+            }
+        }
+        
+        function populateCapacities(capacities) {
+            const select = document.getElementById('capacity_select');
+            select.innerHTML = '<option value="">-- Select a capacity --</option>';
+            
+            capacities.forEach(cap => {
+                const option = document.createElement('option');
+                option.value = cap.id;
+                option.textContent = cap.displayName + ' (' + cap.sku + ', ' + cap.region + ')';
+                select.appendChild(option);
+            });
+            
+            document.getElementById('capacity_info').textContent = 
+                capacities.length + ' capacities available';
+        }
+        
+        // ===== DATA GENERATION =====
+        
+        async function startGeneration() {
+            clearLogs();
+            updateStatus('gen_status_badge', 'Running...', 'running');
+            updateProgress(0, 'Starting...');
+            
+            document.getElementById('btn_generate').disabled = true;
+            document.getElementById('btn_stop_gen').style.display = 'inline-block';
+            
+            document.querySelector('[data-tab="logs"]').click();
+            startEventSource();
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(getConfigData())
+                });
+                
+                const result = await response.json();
+                if (result.error) {
+                    updateStatus('gen_status_badge', 'Error', 'error');
+                    addLog('ERROR: ' + result.error, true);
+                } else {
+                    document.getElementById('upload_dir').value = result.output_dir;
+                    pollStatus('gen');
+                }
+            } catch (e) {
+                updateStatus('gen_status_badge', 'Error', 'error');
+                addLog('ERROR: ' + e.message, true);
+            }
+        }
+        
+        // ===== FABRIC UPLOAD =====
+        
+        async function startUpload() {
+            const uploadDir = document.getElementById('upload_dir').value;
+            if (!uploadDir) {
+                alert('Please specify the data directory (generate data first)');
+                return;
+            }
+            
+            if (!fabricAuthenticated) {
+                alert('Please test Fabric connection first');
+                return;
+            }
+            
+            clearLogs();
+            updateStatus('upload_status_badge', 'Running...', 'running');
+            updateProgress(0, 'Starting upload...', 'fabric');
+            
+            document.getElementById('btn_upload').disabled = true;
+            document.getElementById('btn_stop_upload').style.display = 'inline-block';
+            
+            document.querySelector('[data-tab="logs"]').click();
+            startEventSource();
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        workspace_name: document.getElementById('workspace_name').value,
+                        lakehouse_name: document.getElementById('lakehouse_name').value,
+                        capacity_id: document.getElementById('capacity_select').value,
+                        local_dir: uploadDir,
+                        remote_folder: document.getElementById('remote_folder').value
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.error) {
+                    updateStatus('upload_status_badge', 'Error', 'error');
+                    addLog('ERROR: ' + result.error, true);
+                    document.getElementById('btn_upload').disabled = false;
+                    document.getElementById('btn_stop_upload').style.display = 'none';
+                } else {
+                    pollStatus('upload');
+                }
+            } catch (e) {
+                updateStatus('upload_status_badge', 'Error', 'error');
+                addLog('ERROR: ' + e.message, true);
+                document.getElementById('btn_upload').disabled = false;
+            }
+        }
+        
+        async function pollStatus(type) {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                if (status.running) {
+                    setTimeout(() => pollStatus(type), 1000);
+                } else {
+                    if (type === 'gen') {
+                        document.getElementById('btn_generate').disabled = false;
+                        document.getElementById('btn_stop_gen').style.display = 'none';
+                    } else {
+                        document.getElementById('btn_upload').disabled = false;
+                        document.getElementById('btn_stop_upload').style.display = 'none';
+                    }
+                    
+                    if (status.error) {
+                        updateStatus(type + '_status_badge', 'Error', 'error');
+                        updateStatus('upload_status_badge', 'Error', 'error');
+                    } else if (status.result) {
+                        updateStatus(type === 'gen' ? 'gen_status_badge' : 'upload_status_badge', 'Complete', 'success');
+                        showResult(status.result, type);
+                    }
+                    
+                    if (eventSource) eventSource.close();
+                }
+            } catch (e) {
+                setTimeout(() => pollStatus(type), 2000);
+            }
+        }
+        
+        function showResult(result, type) {
+            const container = document.getElementById('result_container');
+            container.style.display = 'block';
+            
+            if (type === 'gen') {
+                container.innerHTML = `
+                    <div class="result-card">
+                        <h3>✅ Generation Complete</h3>
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <label>Tables Generated</label>
+                                <div class="value">${result.tables_generated || 26}</div>
+                            </div>
+                            <div class="result-item">
+                                <label>Output Directory</label>
+                                <div class="value" style="font-size: 11px; word-break: break-all;">${result.output_dir}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const uploadResult = document.getElementById('upload_result');
+                uploadResult.style.display = 'block';
+                uploadResult.innerHTML = `
+                    <div class="result-card">
+                        <h3>✅ Upload Complete</h3>
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <label>Workspace</label>
+                                <div class="value">${result.workspace}</div>
+                            </div>
+                            <div class="result-item">
+                                <label>Lakehouse</label>
+                                <div class="value">${result.lakehouse}</div>
+                            </div>
+                            <div class="result-item">
+                                <label>Files Uploaded</label>
+                                <div class="value">${result.files_uploaded}</div>
+                            </div>
+                            <div class="result-item">
+                                <label>Location</label>
+                                <div class="value">Files/telco_data/</div>
+                            </div>
+                            ${result.failed_files && result.failed_files.length > 0 ? `
+                            <div class="result-item" style="grid-column: span 2;">
+                                <label style="color: #f59e0b;">⚠️ Failed Files (${result.failed_files.length})</label>
+                                <div class="value" style="color: #f59e0b; font-size: 0.85rem;">${result.failed_files.join(', ')}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = uploadResult.innerHTML;
+            }
+        }
+        
+        async function stopOperation() {
+            await fetch('/api/stop', {method: 'POST'});
+            addLog('⏹️ Stop requested...');
+        }
+        
+        // Check Fabric status on load
+        fetch('/api/fabric/status')
+            .then(r => r.json())
+            .then(data => {
+                if (data.authenticated) {
+                    fabricAuthenticated = true;
+                    fabricCapacities = data.capacities || [];
+                    document.getElementById('status_text').textContent = '✅ Connected';
+                    document.getElementById('status_dot').className = 'status-dot connected';
+                    populateCapacities(fabricCapacities);
+                }
+            });
+        
+        // Initialize
+        updateEstimate();
+    </script>
+</body>
+</html>

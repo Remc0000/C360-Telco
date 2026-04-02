@@ -1,0 +1,24 @@
+# Telco Customer Data Generator - Dependencies
+
+# GUI Framework
+PyQt6>=6.5.0
+
+# Web Framework
+flask>=3.0.0
+
+# Core (no external dependencies required for CSV/JSON output)
+# The generator uses only Python standard library for basic functionality
+
+# Optional: For Parquet output format
+pandas>=2.0.0
+pyarrow>=14.0.0
+
+# Microsoft Fabric integration
+azure-identity>=1.15.0
+requests>=2.31.0
+
+# Optional: For enhanced fake data generation (alternative to built-in Dutch data)
+# faker>=22.0.0
+
+# Development dependencies
+pytest>=7.0.0
